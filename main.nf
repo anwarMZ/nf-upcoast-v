@@ -11,6 +11,8 @@ include {makeFastqSearchPath} from './modules/util.nf'
 
 // import subworkflows
 include {vp_QualityControl} from './workflows/illumina.nf'
+include {vp_Dehosting} from './workflows/illumina.nf'
+
 
 
 if (params.help){
@@ -62,8 +64,12 @@ workflow {
      if ( params.illumina ) {
        //println("This will call Illumina workflow")
        vp_QualityControl(ch_filePairs)
+
+       Channel.fromPath( "${params.dbs}/*.fna", checkIfExists: true )
+                           .set{ ch_HumanReference }
+       vp_Dehosting(ch_filePairs, ch_HumanReference)
      } else {
-         println("Please select a workflow with --nanopolish, --illumina or --medaka")
+         println("Please select a workflow with --illumina or --nanopore")
      }
 
 }
