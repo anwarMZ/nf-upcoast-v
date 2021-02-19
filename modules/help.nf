@@ -14,7 +14,7 @@ def printHelp() {
 
   Mandatory workflow arguments (mutually exclusive):
     --illumina                Run the Illumina workflow
-  
+
   Illumina workflow options:
     Mandatory:
       --prefix                A (unique) string prefix for output files.
@@ -26,5 +26,7 @@ def printHelp() {
       --illuminaKeepLen       Length (bp) of reads to keep after primer trimming (Default: 20)
       --illuminaQualThreshold Sliding window quality threshold for keeping
                               reads after primer trimming (Default: 20)
+      --ref                   Path to Human reference fasta file
+                              
   """.stripIndent()
 }
