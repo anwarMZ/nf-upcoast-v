@@ -68,6 +68,7 @@ workflow {
        Channel.fromPath( "${params.dbs}/*.fna", checkIfExists: true )
                            .set{ ch_HumanReference }
        vp_Dehosting(ch_filePairs, ch_HumanReference)
+       
      } else {
          println("Please select a workflow with --illumina or --nanopore")
      }
