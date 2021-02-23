@@ -167,7 +167,7 @@ workflow vp_QualityControl {
       //Channel.fromPath( "$params.ref/*.fna", checkIfExists: true )
       //                    .set{ ch_HumanReference }
 
-      dehosting(ch_filePairs, ch_HumanReference)
+      //vp_Dehosting(ch_filePairs, ch_HumanReference)
 
 
 
