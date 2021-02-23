@@ -24,10 +24,7 @@ def init_parser():
 
     return parser
 
-
-
 def get_reads_to_remove(bamfile_path, input_mapping_quality, reads_to_remove=set(), count=0):
-
     bamfile = pysam.AlignmentFile(bamfile_path, "rb")
 
     for read in bamfile.fetch():
@@ -119,6 +116,7 @@ def main():
                 'paired_reads_kept' : len(read_list),
                 'percentage_kept' : "{:.2f}".format(percentage_kept),
                 'github_commit' : args.revision}
+
 
     with open('{}_stats.csv'.format(sample_name), 'w') as csvfile:
         header = line.keys()
