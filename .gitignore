@@ -5,3 +5,4 @@ raw_data/
 results
 .DS_Store
 .nextflow
+.github/data/*
