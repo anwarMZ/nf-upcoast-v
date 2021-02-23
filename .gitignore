@@ -1,0 +1,7 @@
+.nextflow.history
+.nextflow.log*
+work/
+raw_data/
+results
+.DS_Store
+.nextflow
