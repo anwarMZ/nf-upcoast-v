@@ -72,7 +72,7 @@ workflow {
 
         Channel.fromPath( "$params.dbs/*.fasta", checkIfExists: true )
                           .set{ ch_vpReference }
-        //vp_prepareReferenceFiles()
+
         vp_Dehosting(ch_filePairs, ch_vpReference, ch_HumanReference, )
 
      } else {
