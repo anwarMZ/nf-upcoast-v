@@ -35,7 +35,24 @@ process multiQC{
     """
 }
 
-process grabIndex {
+process generateCompositeReference {
+
+    //label 'smallcpu'
+
+    input:
+    path(human_ref)
+    path(vp_ref)
+
+    output:
+    path("composite_reference.fa"), emit: fasta
+
+    script:
+    """
+    cat $human_ref $vp_ref > composite_reference.fa
+    """
+}
+
+process grabCompositeIndex {
 
     //label 'smallcpu'
 
@@ -43,38 +60,38 @@ process grabIndex {
     path(index_folder)
 
     output:
-    file("*.fna.*")
+    file("*.fa.*")
 
     script:
     """
-    ln -sf $index_folder/*.fna.* ./
+    ln -sf $index_folder/*.fa.* ./
     """
 }
 
 process indexReference {
 
-    tag { "GRC38" }
+    tag { "bwa_composite_index" }
 
     input:
-    path(human_ref)
+    path(composite_ref)
 
     output:
     file("*.fa*")
 
     script:
     """
-    bwa index -a bwtsw $human_ref
+    bwa index -a bwtsw $composite_ref
     """
 }
 
-process readmapping {
+process mapToCompositeIndex {
     tag { "${params.prefix}/${sampleName}" }
     publishDir "${params.outdir}/${params.prefix}/${task.process.replaceAll(":","_")}", pattern: "${sampleName}.*", mode: "copy"
 
     cpus 2
 
     input:
-    tuple(sampleName, path(forward), path(reverse), path(reference))
+    tuple(sampleName, path(forward), path(reverse), path(composite_ref))
     path(indexed_reference)
 
     output:
@@ -83,7 +100,7 @@ process readmapping {
 
     script:
     """
-    bwa mem -t ${task.cpus} ${reference} ${forward} ${reverse} | samtools sort --threads 6 -T "temp" -O BAM -o ${sampleName}.sorted.bam
+    bwa mem -t ${task.cpus} ${composite_ref} ${forward} ${reverse} | samtools sort --threads ${task.cpus} -T "temp" -O BAM -o ${sampleName}.sorted.bam
     samtools flagstat ${sampleName}.sorted.bam > ${sampleName}.flagstats.txt
     """
 }
@@ -96,10 +113,10 @@ process dehostBamFiles {
     //label 'mediumcpu'
 
     input:
-    tuple(sampleName, path(bam))
+    tuple(sampleName, path(composite_bam))
 
     output:
-    tuple sampleName, path("${sampleName}.dehosted.bam"), emit: dehosted_bam
+    tuple sampleName, path("${sampleName}.dehosted.bam"), emit: bam
     path("${sampleName}*.csv"), emit: csv
 
     script:
@@ -107,8 +124,8 @@ process dehostBamFiles {
     def rev = workflow.commitId ?: workflow.revision ?: workflow.scriptId
 
     """
-    samtools index ${bam}
-    dehost.py --file ${bam} \
+    samtools index ${composite_bam}
+    dehost.py --file ${composite_bam} \
     -q ${params.keep_min_map_quality} \
     -Q ${params.remove_min_map_quality} \
     -o ${sampleName}.dehosted.bam \
@@ -139,12 +156,12 @@ process generateDehostedReads {
 
 process combineDehostedCSVs {
 
-    tag { "${params.prefix}/${sampleName}" }
-    publishDir "${params.outdir}/${params.prefix}/${task.process.replaceAll(":","_")}", pattern: "dehosting_summary.csv", mode: "copy"
+    tag { "${params.prefix}" }
+    publishDir "${params.outdir}/${params.prefix}/${task.process.replaceAll(":","_")}", pattern: "*summary.csv", mode: "copy"
     //label 'smallcpu'
 
     input:
-    path("*.csv")
+    path(csvs)
 
     output:
     path("removal_summary.csv")
