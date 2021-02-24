@@ -9,28 +9,46 @@ import subprocess
 from collections import defaultdict
 from pathlib import Path
 
+
 def init_parser():
-    '''
+    """
     Parser Arguments to pass to script from CL
-    '''
+    """
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-f', '--file', required=True, help='Composite Reference BAM file of mapped reads')
-    #parser.add_argument('-k', '--keep_id', required=False, default='MN908947.3', type=str, help='Reference ID of genome to keep. Default: MN908947.3')
-    parser.add_argument('-q', '--keep_minimum_quality', required=False, type=int, default=60, help='Minimum quality of the reads to keep')
-    parser.add_argument('-Q', '--remove_minimum_quality', required=False, type=int, default=0, help='Minimum quality of the reads to be included in removal')
-    parser.add_argument('-o', '--output', required=False, default='out.bam', help='Output BAM name')
-    parser.add_argument('-R', '--revision', required=False, default='NA', help='Pass a pipeline commit hash to keep track of what version was ran')
+    parser.add_argument('-f', '--file', required=True,
+                        help='Composite Reference BAM file of mapped '
+                             'reads')
+    parser.add_argument('-k', '--keep_id', required=False,
+                        default=['NC_004603.1', 'NC_004605.1'],
+                        help='Reference ID of genome to keep. '
+                             'Default: [NC_004603.1, NC_004605.1]')
+    parser.add_argument('-q', '--keep_minimum_quality', required=False,
+                        type=int, default=60,
+                        help='Minimum quality of the reads to keep')
+    parser.add_argument('-Q', '--remove_minimum_quality',
+                        required=False, type=int, default=0,
+                        help='Minimum quality of the reads to be '
+                             'included in removal')
+    parser.add_argument('-o', '--output', required=False,
+                        default='out.bam', help='Output BAM name')
+    parser.add_argument('-R', '--revision', required=False,
+                        default='NA',
+                        help='Pass a pipeline commit hash to keep '
+                             'track of what version was ran')
 
     return parser
 
-def get_reads_to_remove(bamfile_path, input_mapping_quality, reads_to_remove=set(), count=0):
+
+def get_reads_to_remove(bamfile_path, input_mapping_quality, contig_ID,
+                        reads_to_remove=set(), count=0):
     bamfile = pysam.AlignmentFile(bamfile_path, "rb")
 
     for read in bamfile.fetch():
-        if str(read.reference_name).startswith("chr") and read.mapping_quality >= input_mapping_quality:
-            reads_to_remove.add(read.query_name)
-            count += 1
+        if read.reference_name not in contig_ID:
+            if read.mapping_quality >= input_mapping_quality:
+                reads_to_remove.add(read.query_name)
+                count += 1
     bamfile.close()
 
     return reads_to_remove, count
@@ -38,8 +56,8 @@ def get_reads_to_remove(bamfile_path, input_mapping_quality, reads_to_remove=set
 
 def read_pair_generator(bam, region_string=None):
     """
-    Generate read pairs for a SAM or BAM file or within a region string of said file.
-    Reads are added to read_dict until a pair is found.
+    Generate read pairs for a SAM or BAM file or within a region string
+    of said file. Reads are added to read_dict until a pair is found.
     """
     read_dict = defaultdict(lambda: [None, None])
     for read in bam.fetch(region=region_string):
@@ -61,8 +79,9 @@ def read_pair_generator(bam, region_string=None):
             del read_dict[qname]
 
 
-def remove_host_reads(bamfile_in, input_mapping_quality, remove_reads_set, reads_found=[], human_count=0, poor_quality_count=0):
-
+def remove_host_reads(bamfile_in, input_mapping_quality,
+                      remove_reads_set, reads_found=[], human_count=0,
+                      poor_quality_count=0):
     bamfile = pysam.AlignmentFile(bamfile_in, "rb")
     header = bamfile.header
 
@@ -87,7 +106,8 @@ def remove_host_reads(bamfile_in, input_mapping_quality, remove_reads_set, reads
 
 
 def generate_dehosted_output(reads_found, keep_header, bamfile_out):
-    with pysam.AlignmentFile(bamfile_out, "w", header=keep_header) as outfile:
+    with pysam.AlignmentFile(bamfile_out, "w",
+                             header=keep_header) as outfile:
         for read in reads_found:
             outfile.write(read)
 
@@ -98,25 +118,27 @@ def main():
 
     sample_name = os.path.splitext(Path(args.file).stem)[0]
 
+    remove_reads_set, human_read_count = get_reads_to_remove(args.file,
+                                                             args.remove_minimum_quality,
+                                                             args.keep_id)
 
-    remove_reads_set, human_read_count = get_reads_to_remove(args.file, args.remove_minimum_quality)
-
-    read_list, human_filtered_count, poor_quality_count, header = remove_host_reads(args.file, args.keep_minimum_quality, remove_reads_set)
+    read_list, human_filtered_count, poor_quality_count, header = remove_host_reads(
+        args.file, args.keep_minimum_quality, remove_reads_set)
 
     generate_dehosted_output(read_list, header, args.output)
 
     if len(read_list) == 0:
         percentage_kept = 0
     else:
-        percentage_kept = len(read_list)/(human_filtered_count + poor_quality_count + len(read_list)) * 100
+        percentage_kept = len(read_list) / (
+                human_filtered_count + poor_quality_count + len(read_list)) * 100
 
-    line = {    'sample' : sample_name,
-                'human_reads_filtered' : human_filtered_count,
-                'poor_quality_reads_filtered' : poor_quality_count,
-                'paired_reads_kept' : len(read_list),
-                'percentage_kept' : "{:.2f}".format(percentage_kept),
-                'github_commit' : args.revision}
-
+    line = {'sample': sample_name,
+            'human_reads_filtered': human_filtered_count,
+            'poor_quality_reads_filtered': poor_quality_count,
+            'paired_reads_kept': len(read_list),
+            'percentage_kept': "{:.2f}".format(percentage_kept),
+            'github_commit': args.revision}
 
     with open('{}_stats.csv'.format(sample_name), 'w') as csvfile:
         header = line.keys()
