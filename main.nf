@@ -12,7 +12,7 @@ include {makeFastqSearchPath} from './modules/util.nf'
 // import subworkflows
 include {vp_QualityControl} from './workflows/Illumina.nf'
 include {vp_Dehosting} from './workflows/Illumina.nf'
-include {vp_prepareReferenceFiles} from './workflows/Illumina.nf'
+
 
 
 
