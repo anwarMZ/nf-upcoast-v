@@ -1,7 +1,7 @@
 .nextflow.history
 .nextflow.log*
 work/
-raw_data/
+raw_input/
 results
 .DS_Store
 .nextflow
