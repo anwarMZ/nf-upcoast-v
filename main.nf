@@ -10,8 +10,9 @@ include {printHelp} from './modules/help.nf'
 include {makeFastqSearchPath} from './modules/util.nf'
 
 // import subworkflows
-include {vp_QualityControl} from './workflows/illumina.nf'
-include {vp_Dehosting} from './workflows/illumina.nf'
+include {vp_QualityControl} from './workflows/Illumina.nf'
+include {vp_Dehosting} from './workflows/Illumina.nf'
+include {vp_prepareReferenceFiles} from './workflows/Illumina.nf'
 
 
 
@@ -65,10 +66,15 @@ workflow {
        //println("This will call Illumina workflow")
        vp_QualityControl(ch_filePairs)
 
-       Channel.fromPath( "${params.dbs}/*.fna", checkIfExists: true )
-                           .set{ ch_HumanReference }
-       vp_Dehosting(ch_filePairs, ch_HumanReference)
-       
+       Channel.fromPath( "$params.dbs/*.fna", checkIfExists: true )
+                          .set{ ch_HumanReference }
+
+
+        Channel.fromPath( "$params.dbs/*.fasta", checkIfExists: true )
+                          .set{ ch_vpReference }
+        //vp_prepareReferenceFiles()
+        vp_Dehosting(ch_filePairs, ch_vpReference, ch_HumanReference, )
+
      } else {
          println("Please select a workflow with --illumina or --nanopore")
      }
