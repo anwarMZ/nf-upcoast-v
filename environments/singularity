@@ -1,0 +1,28 @@
+Bootstrap: docker
+From: continuumio/miniconda3:4.9.2
+Stage: condabuild
+%files
+/vagrant/nf-upcoast-v/environments/environment.yml /environment.yml
+%labels
+authors="Zohaib Anwar" 
+description="Docker image containing all requirements for the upcoast-v project's vibrio pipeline"
+%post
+
+/opt/conda/bin/conda install mamba -c conda-forge && \
+/opt/conda/bin/mamba env create -f /environment.yml 
+
+
+Bootstrap: docker
+From: debian:buster-slim
+Stage: final
+
+%post
+apt-get update && \
+apt-get install -y git procps && \
+apt-get clean -y
+
+%files from condabuild
+  /opt/conda/envs/nf-upcoastv-env /opt/conda/envs/nf-upcoastv-env
+
+%environment
+export PATH=/opt/conda/envs/nf-upcoastv-env/bin:$PATH
