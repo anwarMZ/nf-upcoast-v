@@ -2,14 +2,14 @@ Bootstrap: docker
 From: continuumio/miniconda3:4.9.2
 Stage: condabuild
 %files
-/vagrant/nf-upcoast-v/environments/environment.yml /environment.yml
+environments/environment.yml /environment.yml
 %labels
-authors="Zohaib Anwar" 
+authors="Zohaib Anwar"
 description="Docker image containing all requirements for the upcoast-v project's vibrio pipeline"
 %post
 
 /opt/conda/bin/conda install mamba -c conda-forge && \
-/opt/conda/bin/mamba env create -f /environment.yml 
+/opt/conda/bin/mamba env create -f /environment.yml
 
 
 Bootstrap: docker
