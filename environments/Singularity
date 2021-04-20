@@ -9,7 +9,6 @@ description="Docker image containing all requirements for the upcoast-v project'
 %post
 
 apt-get update && apt-get install -y g++ git make procps rsync && apt-get clean -y
-
 /opt/conda/bin/conda create --name nf-upcoastv-env && \
     conda config --append channels default && \
     conda config --append channels bioconda  && \
