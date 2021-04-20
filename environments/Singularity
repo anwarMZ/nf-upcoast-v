@@ -7,7 +7,6 @@ authors="Zohaib Anwar"
 description="Docker image containing all requirements for the upcoast-v project's vibrio pipeline"
 
 %post
-
 apt-get update && apt-get install -y g++ git make procps rsync && apt-get clean -y
 /opt/conda/bin/conda create --name nf-upcoastv-env && \
     conda config --append channels default && \
