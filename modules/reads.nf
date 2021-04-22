@@ -1,9 +1,9 @@
 process fastQC{
 
     tag { "${params.prefix}/${sampleName}" }
-    publishDir "${params.outdir}/${params.prefix}/${task.process.replaceAll(":","_")}", pattern: "*fastqc*", mode: "copy"
+    publishDir "${params.outdir}/${params.prefix}/${task.process.replaceAll(":","_")}", pattern: "*.{zip,html}", mode: "copy"
 
-    cpus 2
+    label 'smallcpu'
 
     input:
     tuple(sampleName, path(forward), path(reverse))
@@ -12,8 +12,7 @@ process fastQC{
     path("*.{zip,html}"), emit: fastqc_files
 
     """
-    fastqc -q \
-    -t ${task.cpus} ${forward} ${reverse}
+    fastqc -t ${task.cpus} ${forward} ${reverse}
     """
 }
 
@@ -21,8 +20,6 @@ process multiQC{
 
     tag { "${params.prefix}" }
     publishDir "${params.outdir}/${params.prefix}/${task.process.replaceAll(":","_")}", pattern: "*.html", mode: "copy", overwrite: false
-
-    //cpu 2
 
     input:
     path("*")
@@ -37,7 +34,7 @@ process multiQC{
 
 process generateCompositeReference {
 
-    //label 'smallcpu'
+    tag { "Vp_Human_CompositeIndex" }
 
     input:
     path(human_ref)
@@ -54,7 +51,7 @@ process generateCompositeReference {
 
 process grabCompositeIndex {
 
-    //label 'smallcpu'
+    tag { "Vp_Human_CompositeIndex" }
 
     input:
     path(index_folder)
@@ -88,7 +85,7 @@ process mapToCompositeIndex {
     tag { "${params.prefix}/${sampleName}" }
     publishDir "${params.outdir}/${params.prefix}/${task.process.replaceAll(":","_")}", pattern: "${sampleName}.*", mode: "copy"
 
-    cpus 2
+    label 'largecpu'
 
     input:
     tuple(sampleName, path(forward), path(reverse), path(composite_ref))
@@ -108,9 +105,7 @@ process mapToCompositeIndex {
 
 process dehostBamFiles {
     tag { "${params.prefix}/${sampleName}" }
-    publishDir "${params.outdir}/${params.prefix}/${task.process.replaceAll(":","_")}", pattern: "${sampleName}.dehosted.bam", mode: "copy"
-    publishDir "${params.outdir}/${params.prefix}/${task.process.replaceAll(":","_")}", pattern: "${sampleName}*.csv", mode: "copy"
-    //label 'mediumcpu'
+    publishDir "${params.outdir}/${params.prefix}/${task.process.replaceAll(":","_")}", pattern: "${sampleName}*.{dehosted.bam,.csv}", mode: "copy"
 
     input:
     tuple(sampleName, path(composite_bam))
@@ -138,8 +133,6 @@ process generateDehostedReads {
     tag { "${params.prefix}/${sampleName}" }
     publishDir "${params.outdir}/${params.prefix}/${task.process.replaceAll(":","_")}", pattern: "${sampleName}-dehosted_R*", mode: "copy"
 
-    //label 'mediumcpu'
-
     input:
     tuple(sampleName, path(dehosted_bam))
 
@@ -156,9 +149,8 @@ process generateDehostedReads {
 
 process combineDehostedCSVs {
 
-    tag { "${params.prefix}" }
+    tag { "${params.prefix}/${sampleName}" }
     publishDir "${params.outdir}/${params.prefix}/${task.process.replaceAll(":","_")}", pattern: "*summary.csv", mode: "copy"
-    //label 'smallcpu'
 
     input:
     path(csvs)
