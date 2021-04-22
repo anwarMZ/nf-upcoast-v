@@ -1,5 +1,5 @@
 Bootstrap: docker
-From: continuumio/miniconda3:4.9.2
+From: continuumio/miniconda3:latest
 Stage: condabuild
 
 %labels
@@ -7,13 +7,12 @@ authors="Zohaib Anwar"
 description="Docker image containing all requirements for the upcoast-v project's vibrio pipeline"
 
 %post
-apt-get update && apt-get install -y g++ git make procps rsync && apt-get clean -y
-/opt/conda/bin/conda create --name nf-upcoastv-env && \
+/opt/conda/bin/conda create --name upcoastv-env && \
     conda config --append channels default && \
     conda config --append channels bioconda  && \
     conda config --append channels conda-forge  && \
     conda install mamba -n base -c conda-forge && \
-    mamba install python=3 biopython=1.74 \
+    mamba install python=3.7 biopython=1.74 \
     libxcb pandas=0.23.0 \
     bwa=0.7.17 samtools=1.10 \
     bcftools=1.10 trim-galore=0.6.5 \
@@ -21,5 +20,14 @@ apt-get update && apt-get install -y g++ git make procps rsync && apt-get clean 
     csvtk=0.22.0 graphviz=2.40.1 fastqc=0.11.7 \
     shovill=1.1.0 multiqc=1.9
 
+Bootstrap: docker
+From: debian:buster-slim
+Stage: final
+
+%post
+apt-get update && \
+apt-get install -y git procps && \
+apt-get clean -y
+
 %environment
-export PATH=/opt/conda/envs/nf-upcoastv-env/bin:$PATH
+export PATH=/opt/conda/envs/upcoastv-env/bin:$PATH
